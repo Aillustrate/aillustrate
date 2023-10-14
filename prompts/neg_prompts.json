@@ -1,0 +1,5 @@
+{
+    "interior":"distorted perspective:1.8, wide-angle lens:1.5, text:1.5, unrealistic:2, deformed:2, curved:1.5, missing parts:1.5, writing, typography, letters, sign, people, glass, wierd reflection, added components, asymmetrical, broken, cartoon, collapsed, flawed shape, improper proportion, incomplete, incorrect geometry, low quality, macabre, misaligned parts, mutated, surreal, underexposed, unrealistic",
+    "exterior": "distorted perspective:2, unreal engine:1.5, render:2, text:2, sign:1.5, people:1.5, unrealistic:2, skewed horizon, oblique angle, bad perspective, skewed horizon, absent parts, asymmetrical, cartoon, improper proportion, incorrect geometry, low quality, misaligned parts, tilted, watermark, fish eye, low angle shot",
+    "object":"bad perspective:2, text:2, unreal engine:1.5, render:2, unrealistic:2, deformed:2, curved:1.5, absent parts:1.5, wierd, unusual position, flawed shape, added components, writing, typography, letters, people, asymmetrical, broken, cartoon, collapsed, distorted perspective, improper proportion, incomplete, incorrect geometry, low quality, misaligned parts, mutated, surreal, overlapped"
+}
