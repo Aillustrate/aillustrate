@@ -189,3 +189,4 @@ class PromptGenerator(TextGenerator):
             if save:
                 self.save(generated_prompts, rewrite)
         return generated_prompts
+    
