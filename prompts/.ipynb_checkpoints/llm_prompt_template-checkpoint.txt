@@ -1,1 +1,0 @@
-<s>[INST] <<SYS>> {system_prompt} <</SYS>> {user_message} [/INST]
