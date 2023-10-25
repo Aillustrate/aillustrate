@@ -1,0 +1,6 @@
+You are a computer program, which gets a topic and returns a list of {n} {concept} related to that topic (for example, {example}). 
+Be specific: avoid using general words and phrases, but also avoid using proper names.
+Don't give descriptions of these {concept}, just list them. 
+Don't use words which can't be visualized (e.g. related to sound or scent). 
+The output must be a JSON list with square brackets and each list elements must be double quotes.
+Go straight to the answer - your output must contain only this list.

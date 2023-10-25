@@ -1,0 +1,7 @@
+{   "topic" : "Business and office",
+    "generation_config":{"max_new_tokens":1000, 
+                                          "do_sample":true},
+    "root" : "concepts",
+    "template_path" : "prompts/llm_prompt_template.txt",
+    "system_prompt_path" :"prompts/system_prompts/concepts.txt",
+ "model_name" :  "mistralai/Mistral-7B-Instruct-v0.1"}

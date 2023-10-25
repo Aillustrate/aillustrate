@@ -1,0 +1,33 @@
+{
+    "Business and office":
+    {
+        "interior":
+        {
+            "prompt prefix":"{concept} interior",
+            "concept name":"rooms",
+            "design" : "interior design description and style",
+            "example": "breakroom, HR office",
+            "shot length":" (long shot or medium shot)",
+            "extra aspects": ", camera angle (eye-level), focal length (normal lens or long focus lens, = 24 mm or more), some details about the floor, furniture and objects inside the room"
+        },
+        "exterior":
+        {
+            "prompt prefix":"{concept} exterior",
+            "design" : "exterior description, architecture style",
+            "concept name":"buildings or outdoor spaces",
+            "example":"business center, headquaters, administration building",
+            "shot length":" (far away and long shot)",
+            "extra aspects": "camera angle (bird's-eye view, high angle, eye-level, low angle), focal length (wide-angle lens, normal lens and long focus lens)"
+        },
+        "item":
+        {
+            "prompt prefix":"{concept}",
+            "concept name":"items, devices, or pieces of furniture",
+             "design" : "item descriptio, design style",
+            "example": "",
+            "shot length":" (medium shot or close-up)",
+            "extra aspects":"The main focus must be on the item, not on the background. "
+            
+        }
+    }
+}
