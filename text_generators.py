@@ -122,6 +122,7 @@ class ConceptGenerator(TextGenerator):
         super().__init__(concept_type, model, tokenizer, topic, root, system_prompt, template, generation_config,
                          constraints, batch_size, config_path)
         self.LIST_REGEXP = re.compile('\[.+?\]')
+        self.LLM_PROMPT_START = '[INST]'
         self.LLM_PROMPT_END = '[/INST]'
         self.MAX_LENGTH = 1000
         self.DO_SAMPLE = True
@@ -130,8 +131,9 @@ class ConceptGenerator(TextGenerator):
         self.system_prompt = self.system_prompt.format(
             n=self.batch_size,
             concept=self.concept_config[self.topic][self.concept_type]['concept name'],
+            topic = self.topic,
             example=self.concept_config[self.topic][self.concept_type]['example'])
-        return super().make_prompt_to_llm(text)
+        return self.template.format(prompt=self.system_prompt)
 
     def process_output(self, llm_output):
         return llm_output.replace(" '", ' ""').replace(",'", ' ,""').replace(",'", ',"').replace('\n', '').replace(',]',
@@ -158,6 +160,15 @@ class ConceptGenerator(TextGenerator):
             old_list = sorted(old_list)
         with open(self.path, 'w') as jf:
             json.dump(old_list, jf)
+    
+    def normalize_list(self):
+        with open(self.path) as jf:
+            concept_list = json.load(jf)
+        for i in range(len(concept_list)):
+            concept_list[i] = concept_list[i].lower().strip()
+        aconcept_list = sorted(list(set(concept_list)))
+        with open(self.path, 'w') as jf:
+            json.dump(concept_list, jf)
 
     def generate(self, save=False, rewrite=False, sort=True):
         prompt = self.make_prompt_to_llm(self.topic)
@@ -255,7 +266,7 @@ class PromptGenerator(TextGenerator):
         return generated_prompts
 
 
-def get_llm(model_name='', config_path='generation_config.json'):
+def get_llm(model_name='', config_path='config/generation_config.json'):
     if config_path:
         with open(config_path) as jf:
             config = json.load(jf)

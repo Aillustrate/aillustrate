@@ -5,22 +5,35 @@ from typing import Dict, List
 
 class PromptProcessor:
     def __init__(self,
-                 prompts_path: str,
+                 concept_type,
+                 topic = '',
+                 prompts_path: str = None,
                  prompts: Dict[str, List[str]] = None,
                  prompt_generator=None,
-                 min_words=7,
+                 min_words=0,
                  split_prefix=True,
-                 intro_words=['sure', 'here', 'certainly', 'ah'],
-                 info=True):
-        self.prompts_path = prompts_path
+                 intro_words=[],
+                 config_path='config/generation_config_concepts.json'):
+        self.concept_type = concept_type
         self.prompt_generator = prompt_generator
-        self.min_words = min_words
+        self.config_path = config_path
+        self.set_config(topic, prompts, prompts_path, min_words, intro_words)
         self.split_prefix = split_prefix
-        self.info = info
-        self.intro_words = intro_words
         self.special_tokens = [re.compile('<*/?SYS>*'), re.compile('\[/?INST\]')]
-        self.prompts = self.load_prompts(prompts, prompts_path)
         self.to_regenerate = {'too short': [], 'has intro': []}
+    
+    def set_config(self, topic, prompts, prompts_path, min_words, intro_words):
+        if self.config_path:
+            with open(self.config_path) as jf:
+                config = json.load(jf)
+        else:
+            config = {}
+        self.topic = topic or config.get('topic', '')
+        self.min_words = min_words or config.get('min_words', 0)
+        self.intro_words = intro_words or config.get('banned_intro_words', [])
+        prompts_path = prompts_path or f'generated_prompts/{self.topic}/{self.concept_type} ({self.topic}).json'
+        self.prompts = self.load_prompts(prompts, prompts_path)
+        
 
     def load_prompts(self, prompts, prompts_path):
         if prompts:
@@ -58,7 +71,7 @@ class PromptProcessor:
         if prompt.endswith('.'):
             return prompt
         elif prompt.endswith(','):
-            prompt[-1] = '.'
+            prompt = prompt[:-1] + '.'
             return prompt
         return prompt + '.'
 
@@ -78,16 +91,16 @@ class PromptProcessor:
 
     def regenerate(self):
         assert self.prompt_generator, 'Prompt generator not provided'
-        for problem in self.to_regenerate.values():
-            for concept, prompt in problem:
+        for problem, pairs in self.to_regenerate.items():
+            for concept, prompt in pairs:
                 new_prompt = prompt
                 while new_prompt in self.prompts[concept]:
-                    new_prompt = \
-                    list(self.prompt_generator.generate(save=False, rewrite=True, concepts=[concept]).values())[0][0]
+                    new_prompt = list(self.prompt_generator.generate(save=False, rewrite=True, concepts=[concept]).values())[0][0]
                     new_prompt = self.process_prompt(new_prompt, concept)
                     print(f'{prompt} --> {new_prompt}')
                 self.prompts[concept].append(new_prompt)
                 self.prompts[concept].remove(prompt)
+                self.to_regenerate[problem].remove((concept, prompt))
 
     def process(self, save=True, auto_regenerate=False):
         processed_prompts = {}
@@ -97,7 +110,7 @@ class PromptProcessor:
                 processed_prompts[concept].append(self.process_prompt(prompt, concept))
         self.prompts = processed_prompts
         if auto_regenerate:
-            while any(self.to_regenerate.values()):
+            while any(list(self.to_regenerate.values())):
                 self.regenerate()
         if save:
             with open(self.prompts_path, 'w') as jf:
