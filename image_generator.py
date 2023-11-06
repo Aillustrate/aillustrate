@@ -106,9 +106,9 @@ class ImageGenerator:
             start_idx = random.randint(1, int(1e6))
         seeds = [i for i in range(start_idx, start_idx + batch_size, 1)]
         images = []
-        guidance_scale = random.choice(self.guidance_scale_range)
-        num_inference_steps = random.choice(self.num_inference_steps_range)
         for count, seed in enumerate(seeds):
+            guidance_scale = random.choice(self.guidance_scale_range)
+            num_inference_steps = random.choice(self.num_inference_steps_range)
             generation_kwargs = dict(width=self.width, height=self.height,
                           guidance_scale=guidance_scale, num_inference_steps=num_inference_steps,
                           num_images_per_prompt=1, generator=torch.manual_seed(seed))
