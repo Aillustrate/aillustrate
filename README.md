@@ -63,5 +63,5 @@ extra_aspects|some extra aspects to include in prompts. should start with ', '  
 
 If these explainations do not seem clear, read the system prompts in `prompts/system_prompts` and see where these phrases are inserted to.
 
-### Specify concept config
-The default negative prompt might work quite well, especially if you generate interiors, exteriors or items. However, you can also change it. Add the negative prompt for your topic and concept type to  `prompts/neg_prompts.json`.
+### Specify the negative prompt
+The default negative prompt might work quite well, especially if you generate interiors, exteriors or items. However, you can also change it. Add the negative prompt for your topic and concept type to `prompts/neg_prompts.json`.
