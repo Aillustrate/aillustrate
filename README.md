@@ -48,7 +48,7 @@ By **concept** we mean what the images depict. We considered 3 types of concepts
 ## Improving generation
 What can be done to make images more detailed, realistic and relevant to the topic?
 
-### Specify concept config.
+### Specify concept config
 Concept config are pharses which are inserted into the system prompt for the LLM used to generate concept lists and prompts for images. Unless you provide it, the default prompt is used, and it might be not specific enough. So adding your concept config to `prompts/concept_config.json` might improve the generation.
 
 Concept config contain the following parameters
@@ -62,3 +62,6 @@ shot_length  |shot length of the image to include in prompts                    
 extra_aspects|some extra aspects to include in prompts. should start with ', '                                            |, camera angle (eye-level), focal length (normal lens or long focus lens, = 24 mm or more), some details about the floor, furniture and objects inside the room|                     
 
 If these explainations do not seem clear, read the system prompts in `prompts/system_prompts` and see where these phrases are inserted to.
+
+### Specify concept config
+The default negative prompt might work quite well, especially if you generate interiors, exteriors or items. However, you can also change it. Add the negative prompt for your topic and concept type to  `prompts/neg_prompts.json`.
