@@ -39,10 +39,10 @@ By **concept** we mean what the images depict. We considered 3 types of concepts
   
 5. Generate images for your prompts:
    ```python
-      from image_generator import ImageGenerator
-      ig = ImageGenerator(pipe)
-      ig.generate_series();
-      ```
+   from image_generator import ImageGenerator
+   ig = ImageGenerator(pipe)
+   ig.generate_series();
+   ```
    You will find the images in `images/<topic>`.
 
 ## Improving generation
