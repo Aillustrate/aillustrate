@@ -6,7 +6,6 @@ By **concept** we mean what the images depict. We considered 3 types of concepts
 ## How to use
 
   ```bash
-# install requirements and load the model
 pip install -r requirements.txt
 load_model.sh 149716 architectureExterior_v110
   ```
