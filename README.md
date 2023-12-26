@@ -4,6 +4,13 @@ By **topic** we mean the general domain to which images are related *(e.g. Innov
 By **concept** we mean what the images depict. We considered 3 types of concepts: *interiors, exteriors and items*, but this list can be broadened.
 
 ## How to use
+
+  ```bash
+# install requirements and load the model
+pip install -r requirements.txt
+load_model.sh 149716 architectureExterior_v110
+  ```
+
    ```python
    # set your topic and concept type
    topic = [your topic] #e.g. Innovations and technologies
