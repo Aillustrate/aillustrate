@@ -1,2 +1,8 @@
 .*
 !/.gitignore
+results
+images
+generated_prompts
+concepts
+duplicates
+lora
