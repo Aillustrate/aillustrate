@@ -2,69 +2,101 @@ import os
 import gc
 import re
 import json
+import logging
 import warnings
 from abc import ABC
-from typing import Dict
+from typing import Dict, Any, List
+from pydantic.tools import parse_obj_as
 from tqdm.notebook import tqdm, trange
 import torch
-from transformers import AutoModelForCausalLM, AutoTokenizer
+from transformers import AutoTokenizer, AutoModelForCausalLM
+
+from concept_config import ConceptConfig
+from utils import cleanup, parse_concept_config, set_logging
 
 
-def cleanup():
-    torch.cuda.empty_cache()
-    gc.collect()
+set_logging()
 
-
-class TextGenerator(ABC):
+class TextGenerator():
     def __init__(self,
-                 concept_type,
-                 model, tokenizer,
-                 topic='',
-                 root='',
-                 system_prompt='',
-                 template='',
-                 generation_config={},
-                 constraints={},
+                 model:AutoModelForCausalLM, tokenizer:AutoTokenizer,
                  batch_size=1,
-                 config_path=''):
-        self.concept_type = concept_type
+                 config_path='',
+                 **kwargs
+                 ):
+        self.CONCEPT_CONFIG_PATH = 'prompts/concept_config.json'
+        self.DEFAULT_CONCEPT_CONFIG_PATH = 'prompts/default_concept_config.json'
         self.model = model
         self.tokenizer = tokenizer
         self.batch_size = batch_size
         self.config_path = config_path
-        self.set_config(topic, root, system_prompt, template, generation_config, constraints)
+        self.set_config(**kwargs)
         self.path = os.path.join(self.root, f'{self.concept_type} ({self.topic}).json')
 
-    def set_config(self, topic, root, system_prompt, template, generation_config, constraints):
+    def set_config(self, topic:str='',
+                 concept_type:str='',
+                 root:str='',
+                 system_prompt:str='',
+                 template:str='',
+                 generation_config:Dict[str, Any]={},
+                 constraints:Dict[str, Any]={}):
+        """
+        Set the configuration for the text generator.
+
+        Args:
+        param topic: The topic of the images (e.g. 'Innovation and technologies')
+        param concept_type: The concept type of the images e.g. 'interior')
+        param root: The root directory where the results of the genration will be stored
+        param system_prompt: The system prompt for LLM
+        param template: The template for the prompt to LLM
+        param generation_config: The text generation config for LLM in a dictionary format
+        param constraints: Generation constraints (see `set_constraints` method for more detail)
+        """
         if self.config_path:
             with open(self.config_path) as jf:
-                config = json.load(jf)
+                self.config = json.load(jf)
         else:
-            config = {}
-        self.topic = topic or config.get('topic', topic)
-        root = root or config.get('root', root)
+            self.config = {}
+        self.topic = topic or self.config.get('topic', topic)
+        self.concept_type = concept_type or self.config.get('concept_type', concept_type)
+        root = root or self.config.get('root', root)
         self.root = os.path.join(root, self.topic)
         os.makedirs(self.root, exist_ok=True)
         if template:
             self.template = template
         else:
-            template_path = config['template_path']
+            template_path = self.config['template_path']
             with open(template_path) as f:
                 self.template = f.read()
         if system_prompt:
             self.system_prompt = system_prompt
         else:
-            system_prompt_path = config['system_prompt_path']
+            system_prompt_path = self.config['system_prompt_path']
             with open(system_prompt_path) as f:
                 self.system_prompt = f.read()
-        self.generation_config = generation_config or config.get('generation_config', {})
-        self.constraints = constraints or config.get('constraints', {})
+        self.generation_config = generation_config or self.config.get('generation_config', {})
+        self.constraints = constraints or self.config.get('constraints', {})
         self.set_constraints(**constraints)
-        with open('prompts/concept_config.json') as jf:
-            self.concept_config = json.load(jf)
+        concept_config = parse_concept_config(self.topic, self.concept_type, self.CONCEPT_CONFIG_PATH, self.DEFAULT_CONCEPT_CONFIG_PATH, 'concept config')
+        self.concept_config = parse_obj_as(ConceptConfig, concept_config)
 
-    def set_constraints(self, suppress_words=None, begin_suppress_words=None, sequence_bias=None, forced_eos=None,
-                        bad_words=None):
+    def set_constraints(self, 
+                        suppress_words:List[str]=None, 
+                        begin_suppress_words:List[str]=None, 
+                        sequence_bias:Dict[str, float]=None, 
+                        forced_eos:str=None,
+                        bad_words:List[str]=None):
+        """
+        Set text generation constraints.
+        See https://huggingface.co/docs/transformers/main_classes/text_generation#transformers.GenerationConfig for more detail.
+
+        Args:
+        param suppress_words: A list of words that will be suppressed at generation
+        param begin_suppress_words: A list of words that will be suppressed at the beginning of the generation
+        param sequence_bias: Dictionary that maps a sequence of tokens (strings, not numbers) to its bias term
+        param forced_eos: The word to force as the last generated token when max_length is reached
+        param bad_words: A list of words that are not allowed to be generated
+        """
         if suppress_words:
             suppress_tokens = self.get_token_ids(suppress_words)
             self.generation_config.update({"suppress_tokens": suppress_tokens})
@@ -77,12 +109,31 @@ class TextGenerator(ABC):
         if sequence_bias:
             sequence_bias = {self.get_tokens_as_tuple(token): value for token, value in sequence_bias.items()}
             self.generation_config.update({"sequence_bias": sequence_bias})
+    
+    def set_concept_config(self):
+        with open(self.DEFAULT_CONCEPT_CONFIG_PATH) as jf:
+            default_concept_config = json.load(jf)
+        with open(self.CONCEPT_CONFIG_PATH) as jf:
+            all_concept_config = json.load(jf)
+            if self.topic in all_concept_config:
+                topic_config = all_concept_config[self.topic]
+            else:
+                logging.warning(f'No concept config provided for {self.topic}. Using default.')
+                topic_config = default_concept_config
+            if self.concept_type in topic_config:
+                concept_config = topic_config[self.concept_type]
+            elif self.concept_type in default_concept_config:
+                logging.warning(f'No concept config provided for {self.concept_type}. Using default config for {concept_type}.')
+                concept_config = topic_config.get('interior')
+            else:
+                logging.warning(f'No concept config provided for {topic} {self.concept_type}. Using default config for interior.')
+                concept_config = default_concept_config['interior']
+            self.concept_config = parse_obj_as(ConceptConfig, concept_config)
 
     def make_prompt_to_llm(self, text):
         chat = [{"role": "system", "content": self.system_prompt},
                 {"role": "user", "content": text}]
         try:
-            return self.template.format(system_prompt=self.system_prompt, user_message=text)
             return self.tokenizer.apply_chat_template(chat, tokenize=False)
         except:
             return self.template.format(system_prompt=self.system_prompt, user_message=text)
@@ -100,111 +151,156 @@ class TextGenerator(ABC):
     def extract(self, llm_output):
         pass
 
-    def save(self, new, rewrite):
+    def save(self, a):
         with open(self.path, 'w') as jf:
-            json.dump(new, jf)
+            json.dump(a, jf)
 
     def generate(self, save=True, rewrite=False, sort=True):
         pass
+    
+    def get_collection(self, rewrite, default=[]):
+        collection = default
+        if not rewrite and os.path.exists(self.path) and os.path.getsize(self.path) > 0:
+            with open(self.path) as jf:
+                 collection = json.load(jf)
+        return collection
 
 
 class ConceptGenerator(TextGenerator):
-    def __init__(self, concept_type,
-                 model, tokenizer,
-                 topic='',
-                 root='concepts',
-                 system_prompt='',
-                 template='',
-                 generation_config={},
-                 constraints={},
+    def __init__(self,
+                 model:AutoModelForCausalLM, tokenizer:AutoTokenizer,
                  batch_size=20,
-                 config_path='config/generation_config_concepts.json'):
-        super().__init__(concept_type, model, tokenizer, topic, root, system_prompt, template, generation_config,
-                         constraints, batch_size, config_path)
+                 root='concepts',
+                 min_list_size=0,
+                 config_path='config/generation_config_concepts.json',
+                 **kwargs):
+
+        """
+        Args:
+        param model: The decode model to generate the concepts
+        param tokenizer: The tokenizer for the model
+        param batch_size: Number of concepts to generate in one query to the LLM
+        param root: Folder to store the generated concepts
+        param min_list_size: Total number of concepts to generate (the LLM will go on generating concepts until this amount of concepts is reached)
+        param config_path: Path to concept generator config
+        """
+    
+        super().__init__(model=model, tokenizer=tokenizer, 
+                         batch_size=batch_size, root=root, config_path=config_path, **kwargs)
         self.LIST_REGEXP = re.compile('\[.+?\]')
         self.LLM_PROMPT_START = '[INST]'
         self.LLM_PROMPT_END = '[/INST]'
-        self.MAX_LENGTH = 1000
-        self.DO_SAMPLE = True
+        self.SAVE_MESSAGE = f'Concepts saved to "{self.path}"'
+        self.min_list_size = min_list_size or self.config.get('min_list_size', 150)
+        if self.min_list_size < self.batch_size:
+            self.batch_size = self.min_list_size
 
     def make_prompt_to_llm(self, text):
         self.system_prompt = self.system_prompt.format(
             n=self.batch_size,
-            concept=self.concept_config[self.topic][self.concept_type]['concept name'],
+            concept_name=self.concept_config.concept_name,
             topic = self.topic,
-            example=self.concept_config[self.topic][self.concept_type]['example'])
+            example=self.concept_config.example)
         return self.template.format(prompt=self.system_prompt)
 
     def process_output(self, llm_output):
-        return llm_output.replace(" '", ' ""').replace(",'", ' ,""').replace(",'", ',"').replace('\n', '').replace(',]',
-                                                                                                                   ']')
+        return llm_output.replace(" '", ' ""').replace(",'", ' ,""').replace(",'",',"').replace('\n', '').replace(',]', ']').replace('/',' ').replace('\\', ' ').replace('_', ' ').replace('  ', ' ')
 
     def extract(self, llm_output):
+        output_list = []
         llm_output = self.process_output(llm_output)
         list_string = self.LIST_REGEXP.findall(llm_output)
-        print(f'{self.topic}\n{list_string[-1]}')
         if list_string[-1] != self.LLM_PROMPT_END:
-            return json.loads(list_string[-1].lower())
-        return []
-
-    def save(self, concept_list, rewrite, sort):
-        old_list = []
-        if rewrite:
-            old_list = []
-        elif os.path.exists(self.path) and os.path.getsize(self.path) > 0:
-            with open(self.path) as jf:
-                old_list = json.loads(jf.read())
-        old_list.extend(concept_list)
-        old_list = list(set(old_list))
-        if sort:
-            old_list = sorted(old_list)
-        with open(self.path, 'w') as jf:
-            json.dump(old_list, jf)
+            try:
+                output_list = json.loads(list_string[-1].lower())
+            except:
+                pass
+        return output_list
     
-    def normalize_list(self):
-        with open(self.path) as jf:
-            concept_list = json.load(jf)
+    def normalize_list(self, concept_list=[], save=True):
+        if concept_list == [] and os.path.exists(self.path):
+            with open(self.path) as jf:
+                concept_list = json.load(jf)
         for i in range(len(concept_list)):
             concept_list[i] = concept_list[i].lower().strip()
-        aconcept_list = sorted(list(set(concept_list)))
-        with open(self.path, 'w') as jf:
-            json.dump(concept_list, jf)
-
-    def generate(self, save=False, rewrite=False, sort=True):
-        prompt = self.make_prompt_to_llm(self.topic)
-        llm_output = self.generate_text(prompt)
-        concept_list = self.extract(llm_output)
+        concept_list = sorted(list(set(concept_list)))
         if save:
-            self.save(concept_list, rewrite, sort)
+            with open(self.path, 'w') as jf:
+                json.dump(concept_list, jf)
+            logging.info(self.SAVE_MESSAGE)
         return concept_list
 
+    def generate_batch(self, save=False, rewrite=False):
+        concept_list = self.get_collection(rewrite, default=[])
+        prompt = self.make_prompt_to_llm(self.topic)
+        llm_output = self.generate_text(prompt)
+        new_concepts = self.extract(llm_output)
+        concept_list.extend(new_concepts)
+        if save:
+            self.save(concept_list)
+            logging.info(self.SAVE_MESSAGE)
+        return concept_list
+    
+    def generate(self, save=True, rewrite=True) -> List[str]:
+        """
+        Generate a list of concepts.
+        
+        Args:
+        param save: Whether to save the generated concepts
+        param rewrite: Whether to retain the previously generated concepts for the current topic and concept type or replace them with the newly generated ones
+        return: List of concepts
+        """
+        concept_list = self.get_collection(rewrite, default=[])
+        prev_len = len(concept_list)
+        with tqdm(initial=prev_len, total=self.min_list_size) as pbar:
+            while len(concept_list) < self.min_list_size:
+                try:
+                    new_concepts = self.generate_batch(save=False, rewrite=True)
+                    concept_list.extend(new_concepts)
+                    concept_list = self.normalize_list(concept_list=concept_list, save=False)
+                finally:
+                    pbar.update(len(concept_list) - prev_len)
+                    prev_len = len(concept_list)
+            if save:
+                self.save(concept_list)
+                logging.info(self.SAVE_MESSAGE)
+            return concept_list
+            
 
 class PromptGenerator(TextGenerator):
-    def __init__(self, concept_type,
-                 model, tokenizer,
-                 topic='',
-                 root='generated_prompts',
-                 system_prompt='',
-                 template='',
-                 generation_config={},
-                 constraints={},
+    def __init__(self,
+                 model:AutoModelForCausalLM, tokenizer:AutoTokenizer,
                  batch_size=1,
-                 config_path='config/generation_config.json'):
+                 root='generated_prompts',
+                 concepts_root='concepts',
+                 config_path='config/generation_config.json',
+                **kwargs):
 
-        super().__init__(concept_type, model, tokenizer, topic, root, system_prompt, template, generation_config,
-                         constraints, batch_size, config_path)
+        
+        """
+        Args:
+        param model: The decode model to generate the prompts
+        param tokenizer: The tokenizer for the model
+        param batch_size: Number of prompts per concept to generate
+        param root: Folder to store the generated prompts
+        param concept_root: Folder to take the concepts from
+        param config_path: Path to prompt generator config
+        """
+
+        super().__init__(model=model, tokenizer=tokenizer, 
+                         batch_size=batch_size, root=root, config_path=config_path, **kwargs)
 
         self.RESPONSE_REGEXP = re.compile(f'(?<=\[/INST]).*')
-        self.concepts_path = os.path.join('concepts', self.topic, f'{self.concept_type} ({self.topic}).json')
-        self.prompt_prefix = self.concept_config[self.topic][self.concept_type]['prompt prefix']
-        self.path = os.path.join(self.root, f'{self.concept_type} ({self.topic}).json')
+        self.SAVE_MESSAGE = f'Generated prompts saved to "{self.path}"'
+        self.concepts_path = os.path.join(concepts_root, self.topic, f'{self.concept_type} ({self.topic}).json')
+        #self.path = os.path.join(self.root, f'{self.concept_type} ({self.topic}).json')
+        
 
     def get_token_ids(self, sequence):
         return self.tokenizer(sequence, add_special_tokens=False).input_ids
 
     def get_tokens_as_tuple(self, word):
         return tuple(self.get_token_ids([word])[0])
-
         if forced_eos:
             forced_eos_token_id = self.get_token_ids(forced_eos)
             self.generation_config.update({"forced_eos_token_id": forced_eos_token_id})
@@ -212,10 +308,10 @@ class PromptGenerator(TextGenerator):
     def make_prompt_to_llm(self, text):
         self.system_prompt = self.system_prompt.format(
             topic=self.topic,
-            concept=self.concept_config[self.topic][self.concept_type]['concept name'],
-            design=self.concept_config[self.topic][self.concept_type]['design'],
-            shot_length=self.concept_config[self.topic][self.concept_type]['shot length'],
-            extra_aspects=self.concept_config[self.topic][self.concept_type]['extra aspects'])
+            concept_name=self.concept_config.concept_name,
+            design=self.concept_config.design,
+            shot_length=self.concept_config.shot_length,
+            extra_aspects=self.concept_config.extra_aspects)
         return super().make_prompt_to_llm(text)
 
     def process(self, llm_output):
@@ -231,21 +327,31 @@ class PromptGenerator(TextGenerator):
             return extracted_output[0].lower() + extracted_output[1:]
         return ''
 
-    def generate(self, save=False, rewrite=False, display=False, sort=True, concepts=[], rewrite_concept=False):
+    def generate(self, save=False, rewrite=False, display=False, sort=True, concepts=[], rewrite_concept=False) -> Dict[str, str]:
+        """
+        Generates prompts for images.
+        
+        Args:
+        param save: Whether to save the generated concepts
+        param rewrite: Whether to retain the previously generated prompts for the current topic and concept type or replace them with the newly generated ones
+        param display: Whether to output each prompt when it has been generated
+        param sort: Whether to sort prompts for each concepts
+        param concepts: List of concepts to generate the prompts for. If empty, concepts are loaded from the file specified during the initialization.
+        param rewrite_concept: Whether to retain the previously generated prompts for each concept or replace them with the newly generated ones
+        
+        return: Dict of generated prompts for every concept provided
+        """
         if not concepts:
             with open(self.concepts_path) as jf:
                 concepts = json.load(jf)
-        generated_prompts = {}
-        if not rewrite and os.path.exists(self.path) and os.path.getsize(self.path) > 0:
-            with open(self.path) as jf:
-                generated_prompts = json.load(jf)
+        generated_prompts = self.get_collection(rewrite, default={})
 
         tq = tqdm(concepts)
         for concept in tq:
             prompts_for_concept = []
             tq.set_description(concept)
             for i in range(self.batch_size):
-                prompt_prefix = self.prompt_prefix.format(concept=concept)
+                prompt_prefix = self.concept_config.prompt_prefix.format(concept=concept)
                 prompt = self.make_prompt_to_llm(prompt_prefix)
                 llm_output = self.generate_text(prompt)
                 generated_prompt = f'{prompt_prefix}: {self.extract(llm_output)}'
@@ -262,11 +368,22 @@ class PromptGenerator(TextGenerator):
             else:
                 generated_prompts.update({concept: prompts_for_concept})
             if save:
-                self.save(generated_prompts, rewrite)
+                self.save(generated_prompts)
+        if save:
+            logging.info(self.SAVE_MESSAGE)
         return generated_prompts
 
 
-def get_llm(model_name='', config_path='config/generation_config.json'):
+def get_llm(model_name:str='', config_path:str='config/generation_config.json') -> [AutoModelForCausalLM, AutoTokenizer]:
+    """
+    Get model and tokenizer by name.
+
+    Args:
+    param model_name: Huggingface name of the decoder model used for the generation (e.g. 'mistralai/Mistral-7B-Instruct-v0.1')
+    param config_path: Path to text generation config 
+    return: Model and tokenizer
+    
+    """
     if config_path:
         with open(config_path) as jf:
             config = json.load(jf)
