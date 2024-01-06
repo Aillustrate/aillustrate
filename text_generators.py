@@ -40,6 +40,7 @@ class TextGenerator:
             topic: str = "",
             concept_type: str = "",
             root: str = "",
+            device: str = "",
             system_prompt: str = "",
             template: str = "",
             generation_config: Dict[str, Any] = {},
@@ -52,6 +53,7 @@ class TextGenerator:
         param topic: The topic of the images (e.g. 'Innovation and technologies')
         param concept_type: The concept type of the images e.g. 'interior')
         param root: The root directory where the results of the genration will be stored
+        param device: Device to allocate the model on (CPU or CUDA)
         param system_prompt: The system prompt for LLM
         param template: The template for the prompt to LLM
         param generation_config: The text generation config for LLM in a dictionary format
@@ -69,6 +71,7 @@ class TextGenerator:
         root = root or self.config.get("root", root)
         self.root = os.path.join(root, self.topic)
         os.makedirs(self.root, exist_ok=True)
+        self.device = device or self.config.get("device", "cuda")
         if template:
             self.template = template
         else:
@@ -177,7 +180,7 @@ class TextGenerator:
 
     def generate_text(self, text):
         input_ids = self.tokenizer(text, return_tensors="pt").input_ids.to(
-            "cuda")
+            self.device)
         output = self.tokenizer.decode(
             self.model.generate(
                 input_ids,
@@ -408,6 +411,7 @@ class PromptGenerator(TextGenerator):
             sort=True,
             concepts=[],
             rewrite_concept=False,
+            show_progress=True
     ) -> Dict[str, str]:
         """
         Generates prompts for images.
@@ -417,8 +421,9 @@ class PromptGenerator(TextGenerator):
         param rewrite: Whether to retain the previously generated prompts for the current topic and concept type or replace them with the newly generated ones
         param display: Whether to output each prompt when it has been generated
         param sort: Whether to sort prompts for each concept
-        param concepts: List of concepts to generate the prompts for. If empty, concepts are loaded from the file specified during the initialization.
+        param concepts: List of concepts to generate the prompts for. If empty, concepts are loaded from the file specified during the initialization
         param rewrite_concept: Whether to retain the previously generated prompts for each concept or replace them with the newly generated ones
+        param show_progress: Whether to show progress bar. Recommended to pass `True` for mass generation and `False` for single experiments
 
         return: Dict of generated prompts for every concept provided
         """
@@ -427,10 +432,14 @@ class PromptGenerator(TextGenerator):
                 concepts = json.load(jf)
         generated_prompts = self.get_collection(rewrite, default={})
 
-        tq = tqdm(concepts)
+        if show_progress:
+            tq = tqdm(concepts)
+        else:
+            tq = concepts
         for concept in tq:
             prompts_for_concept = []
-            tq.set_description(concept)
+            if show_progress:
+                tq.set_description(concept)
             for i in range(self.batch_size):
                 prompt_prefix = self.concept_config.prompt_prefix.format(
                     concept=concept
@@ -452,13 +461,14 @@ class PromptGenerator(TextGenerator):
                 generated_prompts.update({concept: prompts_for_concept})
             if save:
                 self.save(generated_prompts)
-        if save:
+        if save and show_progress:
             logging.info(self.SAVE_MESSAGE)
         return generated_prompts
 
 
 def get_llm(
         model_name: str = "",
+        device:str = "",
         config_path: str = "config/generation_config.json"
 ) -> [AutoModelForCausalLM, AutoTokenizer]:
     """
@@ -466,6 +476,7 @@ def get_llm(
 
     Args:
     param model_name: Huggingface name of the decoder model used for the generation (e.g. 'mistralai/Mistral-7B-Instruct-v0.1')
+    param device: Device to allocate the model on (CPU or CUDA)
     param config_path: Path to text generation config
     return: Model and tokenizer
 
@@ -482,5 +493,6 @@ def get_llm(
         model_name, torch_dtype=torch.float16, low_cpu_mem_usage=True
     )
     tokenizer = AutoTokenizer.from_pretrained(model_name, use_fast=True)
-    model.to("cuda")
+    device = device or config.get("device", "cuda")
+    model.to(device)
     return model, tokenizer
