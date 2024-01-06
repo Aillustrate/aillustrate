@@ -85,7 +85,7 @@ def set_topic(topic, config_dir="config"):
 def update_config(
         topic,
         concept_type,
-        lora_config="loras.json",
+        lora_config="config/loras.json",
         generation_config_concepts_path="config/generation_config_concepts.json",
         generation_config_path="config/generation_config.json",
         image_generation_config_path="config/image_generation_config.json",

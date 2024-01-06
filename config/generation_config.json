@@ -1,17 +1,1 @@
-{   "topic" : "Business and office",
-    "generation_config":{"max_new_tokens":72, 
-                                          "do_sample":true, 
-                                          "num_beams":3,
-                                          "temperature":3.0,
-                                          "top_p":0.95,
-                                          "top_k":40
-                                         },
-    "constraints" : {"suppress_words":"bustling people crowd person man human", 
-                     "bad_words":"Sure sure Here Ah", 
-                     "sequence_bias":{"sle": -1.0, "glass": -1.0}, 
-                     "forced_eos":"."
-                                   },
-    "root" : "generated_prompts",
-    "template_path" : "prompts/llm_prompt_template.txt",
-    "system_prompt_path" :"prompts/system_prompts/image_prompts.txt",
-    "model_name" : "mistralai/Mistral-7B-Instruct-v0.1"}
+{"topic": "Finance and Money", "generation_config": {"max_new_tokens": 72, "do_sample": true, "num_beams": 3, "temperature": 3.0, "top_p": 0.95, "top_k": 40}, "constraints": {"suppress_words": "bustling people crowd person man human", "bad_words": "Sure sure Here Ah", "sequence_bias": {"sle": -1.0, "glass": -1.0}, "forced_eos": "."}, "root": "generated_prompts", "template_path": "prompts/llm_prompt_template.txt", "system_prompt_path": "prompts/system_prompts/image_prompts.txt", "model_name": "mistralai/Mistral-7B-Instruct-v0.1", "concept_type": "item"}
