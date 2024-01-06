@@ -15,8 +15,6 @@ from tqdm.notebook import tqdm
 
 from utils import cleanup, parse_concept_config, set_logging
 
-set_logging()
-
 
 class ImageGenerator:
     def __init__(
@@ -36,6 +34,7 @@ class ImageGenerator:
         If not provided, default prompt for the current topic and concept_type will be used.
         param config_path: Path to image generation config
         """
+        set_logging()
         self.DEFAULT_NEGATIVE_PROMPT_PATH = "prompts/default_negative_prompt.json"
         self.pipe = pipe
         self.batch_size = batch_size
@@ -272,9 +271,11 @@ class ImageGenerator:
                 if save:
                     if not series_name:
                         series_name = ""
-                    short_prompt = " ".join(
-                        prompt.replace("/", "").split(":")[1].split(" ")[:6]
-                    )
+                    short_prompt = prompt.replace("/", "").split(":")
+                    if len(short_prompt) > 1:
+                        short_prompt = " ".join(short_prompt[1].split(" ")[:6])
+                    else:
+                        short_prompt = " ".join(short_prompt[0].split(" ")[:6])
                     name = f"{series_name}_{short_prompt}_{seed}_gs{guidance_scale}_{num_inference_steps}_steps"
                     self.save(img, name)
         return images
@@ -356,6 +357,7 @@ def get_pipe(
 
 
     """
+    set_logging()
     if config_path:
         with open(config_path) as jf:
             config = json.load(jf)

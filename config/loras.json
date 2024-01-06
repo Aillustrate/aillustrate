@@ -33,7 +33,8 @@
      "exterior" :{"lora_paths": ["lora/JZCG005-Realistic city photography 1.0.safetensors"], "trigger_words": ["jzcg005"]}
     },
 "Innovations and technologies":{
-     "exterior" :{"lora_paths": ["lora/cyberpunk.safetensors"], "trigger_words": ["cyberpunk"]}
+     "exterior" :{"lora_paths": ["lora/cyberpunk.safetensors"], "trigger_words": ["cyberpunk"]},
+    "item": {"lora_paths": ["lora/productDesignTech.safetensors"], "trigger_words": ["emauromin style"]}
     },
 "Finance and Money":{
      "exterior" :{"lora_paths": ["lora/JZCG005-Realistic city photography 1.0.safetensors"], "trigger_words": ["jzcg005"]}
