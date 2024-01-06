@@ -5,20 +5,28 @@ By **concept** we mean what the images depict. We considered 3 types of concepts
 
 ## How to use
 
-  ```bash
+Clone the repository, install requirements and load an image generation model:
+```bash
+git clone https://github.com/Aillustrate/wonderslide-interior-generation
 pip install -r requirements.txt
 load_model.sh 149716 architectureExterior_v110
   ```
 
-   ```python
-   # set your topic and concept type
-   topic = [your topic] #e.g. Innovations and technologies
-   concept_type = [concept_type] #e.g. interior
+Run via command line:
+```bash
+python main.py --topic=[TOPIC] --concept_type=[CONCEPT_TYPE]
+```
 
-   # initialize the pipeline
-   from main import Pipeline
-   pipeline = Pipeline()
+Or in Python:
+```python
+# set your topic and concept type
+topic = [your topic] #e.g. Innovations and technologies
+concept_type = [concept_type] #e.g. interior
 
-   # start the generation process
-   pipeline.run(topic, concept_type)
-   ```
+# initialize the pipeline
+from main import ParllelPipeline
+pipeline = ParllelPipeline(topic, concept_type)
+
+# start the generation process
+pipeline.run()
+```
