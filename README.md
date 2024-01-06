@@ -1,5 +1,5 @@
 # Automatic image generation pipeline
-This tool allows to generate images for various topics and concepts.  
+This tool allows to generate images for various topics and concepts. See our [design doc](ml_system_design_doc/ML_System_Design_Doc_Image_Generation.md) (RU) for more details.  
 By **topic** we mean the general domain to which images are related *(e.g. Innovations and technologies, Home Interior and Lifestyle, Nature and ecology)*    
 By **concept** we mean what the images depict. We considered 3 types of concepts: *interiors, exteriors and items*, but this list can be broadened.
 
