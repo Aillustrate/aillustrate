@@ -164,12 +164,12 @@ class ParallelPipeline(BasePipeline):
         for concept in tq:
             tq.set_description(concept)
             prompts = prompt_generator.generate(concepts = [concept], save=True, rewrite=True, show_progress=False)
-            generated_prompts.update({concept:prompts})
             prompt_processor = PromptProcessor(prompts=prompts, prompt_generator=prompt_generator)
             _, processed_prompts = prompt_processor.process(save=True, auto_regenerate=True)
+            generated_prompts.update(processed_prompts)
+            prompt_generator.save(generated_prompts)
             for prompt in processed_prompts:
                 image_generator.generate_by_prompt(prompt = prompt, series_name = concept, save=True, display_images=False)
-        prompt_generator.save(generated_prompts)
                 
 
 if __name__ == '__main__':
