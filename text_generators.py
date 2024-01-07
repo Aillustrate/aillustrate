@@ -8,7 +8,7 @@ from typing import Any, Dict, List
 import torch
 from concept_config import ConceptConfig
 from pydantic.tools import parse_obj_as
-from tqdm.notebook import tqdm
+from tqdm.auto import tqdm
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
 from utils import cleanup, parse_concept_config, set_logging
@@ -49,7 +49,6 @@ class TextGenerator:
         """
         Set the configuration for the text generator.
 
-        Args:
         param topic: The topic of the images (e.g. 'Innovation and technologies')
         param concept_type: The concept type of the images e.g. 'interior')
         param root: The root directory where the results of the genration will be stored
@@ -110,7 +109,6 @@ class TextGenerator:
         Set text generation constraints.
         See https://huggingface.co/docs/transformers/main_classes/text_generation#transformers.GenerationConfig for more detail.
 
-        Args:
         param suppress_words: A list of words that will be suppressed at generation
         param begin_suppress_words: A list of words that will be suppressed at the beginning of the generation
         param sequence_bias: Dictionary that maps a sequence of tokens (strings, not numbers) to its bias term
@@ -231,7 +229,6 @@ class ConceptGenerator(TextGenerator):
             **kwargs,
     ):
         """
-        Args:
         param model: The decoder model to generate the concepts
         param tokenizer: The tokenizer for the model
         param batch_size: Number of concepts to generate in one query to the LLM
@@ -317,7 +314,6 @@ class ConceptGenerator(TextGenerator):
         """
         Generate a list of concepts.
 
-        Args:
         param save: Whether to save the generated concepts
         param rewrite: Whether to retain the previously generated concepts for the current topic and concept type or replace them with the newly generated ones
         return: List of concepts
@@ -354,7 +350,6 @@ class PromptGenerator(TextGenerator):
             **kwargs,
     ):
         """
-        Args:
         param model: The decode model to generate the prompts
         param tokenizer: The tokenizer for the model
         param batch_size: Number of prompts per concept to generate
@@ -416,7 +411,6 @@ class PromptGenerator(TextGenerator):
         """
         Generates prompts for images.
 
-        Args:
         param save: Whether to save the generated concepts
         param rewrite: Whether to retain the previously generated prompts for the current topic and concept type or replace them with the newly generated ones
         param display: Whether to output each prompt when it has been generated
@@ -474,7 +468,6 @@ def get_llm(
     """
     Get model and tokenizer by name.
 
-    Args:
     param model_name: Huggingface name of the decoder model used for the generation (e.g. 'mistralai/Mistral-7B-Instruct-v0.1')
     param device: Device to allocate the model on (CPU or CUDA)
     param config_path: Path to text generation config
