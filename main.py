@@ -28,7 +28,6 @@ class BasePipeline:
         """
         Pipeline for concept, prompt and image generation
                 
-        Args:
         param topic: The topic of the images (e.g. 'Innovation and technologies')
         param concept_type: The concept type of the images e.g. 'interior')
         param model: The decode model to generate the concepts and prompts
@@ -58,8 +57,12 @@ class BasePipeline:
             logging.info("Loading diffusion model")
             self.img_pipe = get_pipe()
 
-    def get_generators(self):
-        pass
+    def release_cuda(self):
+        self.model.to('cpu')
+        #self.img_pipe.to('cpu')
+        del self.model
+        del self.img_pipe
+        cleanup()
 
     def run(
             self,
@@ -85,7 +88,6 @@ class SequentialPipeline(BasePipeline):
         """
         Generate a set of images by topic and concept type. Prompts and images are generated sequentially
 
-        Args:
         param min_concepts: Total number of concepts to generate (the LLM will go on generating concepts until this amount of concepts is reached)
         param prompt_batch_size: Number of prompts per concept to generate
         param img_batch_size: Number of images per prompt to generate
@@ -117,6 +119,7 @@ class SequentialPipeline(BasePipeline):
         prompt_processor.process(save=True, auto_regenerate=True)
         logging.info("Generating images")
         image_generator.generate(save=True)
+        self.release_cuda()
 
 class ParallelPipeline(BasePipeline):
     def __init__(self, topic, concept_type, **kwargs):
@@ -132,7 +135,6 @@ class ParallelPipeline(BasePipeline):
         """
         Generate a set of images by topic and concept type. Prompts and images are generated in parallel
 
-        Args:
         param min_concepts: Total number of concepts to generate (the LLM will go on generating concepts until this amount of concepts is reached)
         param prompt_batch_size: Number of prompts per concept to generate
         param img_batch_size: Number of images per prompt to generate
@@ -168,12 +170,13 @@ class ParallelPipeline(BasePipeline):
             _, processed_prompts = prompt_processor.process(save=True, auto_regenerate=True)
             generated_prompts.update(processed_prompts)
             prompt_generator.save(generated_prompts)
-            for prompt in processed_prompts:
+            for prompt in processed_prompts.values():
                 image_generator.generate_by_prompt(prompt = prompt, series_name = concept, save=True, display_images=False)
+        self.release_cuda()
                 
 
 if __name__ == '__main__':
-    # python main.py --topic='Innovations and technologies' --concept_type='interior' --mode='parallel'
+    #python main.py --topic='Innovations and technologies' --concept_type='interior' --mode='parallel'
     parser = argparse.ArgumentParser()
     parser.add_argument("--topic", type=str, required=True)
     parser.add_argument("--concept_type", type=str, required=True)
