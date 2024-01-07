@@ -4,6 +4,7 @@ import re
 from typing import Dict, List
 
 from utils import set_logging
+from text_generators import PromptGenerator
 
 set_logging()
 
@@ -15,18 +16,26 @@ class PromptProcessor:
             concept_type="",
             prompts_path: str = None,
             prompts: Dict[str, List[str]] = None,
-            prompt_generator=None,
+            prompt_generator: PromptGenerator = None,
             min_words=0,
-            split_prefix=True,
             intro_words=[],
             config_path="config/generation_config.json",
     ):
+        """
+        param topic: The topic of the images (e.g. 'Innovation and technologies')
+        param concept_type: The concept type of the images e.g. 'interior')
+        param prompts_path:Path to generated prompts
+        param prompts: Generated prompts for every concept
+        param prompt_generator: Prompt generator that will be used to regenerate prompts
+        param min_words: A prompt containing less than this number of words will be considered too short
+        param intro_words: If a prompt starts with these words, it will be regenerated
+        param config_path: Path to orompt generation config
+        """
         self.prompt_generator = prompt_generator
         self.config_path = config_path
         self.set_config(
             topic, concept_type, prompts, prompts_path, min_words, intro_words
         )
-        self.split_prefix = split_prefix
         self.special_tokens = [re.compile("<*/?SYS>*"),
                                re.compile("\[/?INST\]")]
         self.to_regenerate = {"too short": [], "has intro": []}
@@ -123,6 +132,12 @@ class PromptProcessor:
                 self.to_regenerate[problem].remove((concept, prompt))
 
     def process(self, save=True, auto_regenerate=False):
+        """
+        Finds prompts that are too short or contain LLM into words and regenerates them
+        param save: Whether to save the regenerated prompts
+        param auto_regenerate: Whether to regenerate prompts that are too short or contain LLM into words
+        return: Prompts which require regeneration and regenerated prompts
+        """
         processed_prompts = {}
         for concept, promptlist in self.prompts.items():
             processed_prompts[concept] = []

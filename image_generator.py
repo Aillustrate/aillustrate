@@ -26,8 +26,6 @@ class ImageGenerator:
             **kwargs,
     ):
         """
-        Args:
-
         param pipe: Object of diffusers `DiffusionPipeline` class that will generate the images
         param batch_size: Number of images per prompt to generate
         param negative_prompt: Neagtive prompt that lists what shouldn't be in the image.
@@ -59,7 +57,6 @@ class ImageGenerator:
         """
         Set the configuration for the image generator.
 
-        Args:
         param topic: The topic of the images (e.g. 'Innovation and technologies')
         param concept_type: The concept type of the images e.g. 'interior')
         param use_prompt_embeddings: Whether to use prompt embeddings during the genration
@@ -208,8 +205,7 @@ class ImageGenerator:
     ):
         """
         Generates one or multiple images for one prompt.
-
-        Args:
+        
         param prompt: A prompt to generate an image for
         start_idx: Random seed to start iteration from.
         If `batch_size` > 1 and it will increase by 1 for every new generation.
@@ -219,7 +215,7 @@ class ImageGenerator:
         Recommended to pass `False` for mass generation and `True` for single experiments.
         param series_name: Prefix put in the image file when saving
         param add_trigger_words: Whether to add trigger words for LoRA to each prompt
-        param **kwargs: Kwargs passed to the image generation pipeline.
+        param **kw Kwargs passed to the image generation pipeline.
         See https://huggingface.co/docs/diffusers/v0.8.0/en/api/pipelines/stable_diffusion#diffusers.StableDiffusionPipeline.__call__ for more detail.
         """
         images = []
@@ -283,8 +279,7 @@ class ImageGenerator:
     def generate(self, prompt: str = None, save: bool = True, **kwargs):
         """
         Main generation method. Generates image(s) for prompt(s)
-
-        Args:
+        
         param prompt: A prompt to generate an image for.
         If not provided prompts are loaded from a file.
         Recommended to pass this argument for single experiments.
@@ -344,7 +339,6 @@ def get_pipe(
     """
     Get the image generation pipeline
 
-    Args:
     param model_name: Diffusion model name (e.g. 'architectureExterior_v110')
     param clip_skip: Number of CLIP layers which are skipped during the generation
     param text_encoder_name: Name of the model from which the text encoder is taken (if `clip_skip` > 1)
@@ -364,7 +358,7 @@ def get_pipe(
     else:
         config = {}
     model_name = model_name or config.get("model_name",
-                                          "architectureExterior_v110")
+                                          "runwayml/stable-diffusion-v1-5")
     clip_skip = clip_skip or config.get("clip_skip", 1)
     text_encoder_name = text_encoder_name or config.get(
         "encoder", "runwayml/stable-diffusion-v1-5"
