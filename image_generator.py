@@ -11,7 +11,7 @@ import transformers
 from diffusers import DiffusionPipeline
 from diffusers.pipelines.stable_diffusion import StableDiffusionSafetyChecker
 from IPython.display import display
-from tqdm.notebook import tqdm
+from tqdm.auto import tqdm
 
 from utils import cleanup, parse_concept_config, set_logging
 
