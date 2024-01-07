@@ -32,3 +32,5 @@ pipeline = ParllelPipeline(topic, concept_type)
 # start the generation process
 pipeline.run()
 ```
+
+Aso see the [notebook](https://github.com/Aillustrate/wonderslide-interior-generation/blob/main/example.ipynb) with examples.
