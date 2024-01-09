@@ -13,7 +13,7 @@ from diffusers.pipelines.stable_diffusion import StableDiffusionSafetyChecker
 from IPython.display import display
 from tqdm.auto import tqdm
 
-from utils import cleanup, parse_concept_config, set_logging
+from utils import cleanup, parse_prompt_config, set_logging
 
 
 class ImageGenerator:
@@ -115,7 +115,7 @@ class ImageGenerator:
             if not negative_prompt_path:
                 logging.warning("No negative prompt provided. Using default.")
                 negative_prompt_path = self.DEFAULT_NEGATIVE_PROMPT_PATH
-            self.negative_prompt = parse_concept_config(
+            self.negative_prompt = parse_prompt_config(
                 self.topic,
                 self.concept_type,
                 negative_prompt_path,
