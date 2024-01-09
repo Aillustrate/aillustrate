@@ -42,7 +42,6 @@ def archive(path, result_path="result"):
     """
     Save generated images to zip archive
 
-    Args:
     param path: Path to source folder with the images
     param result_path: Path to target folder where the archive will be stored
     """
@@ -110,29 +109,29 @@ def update_config(
             json.dump(config, jf)
 
 
-def parse_concept_config(topic, concept_type, config_path, default_path,
+def parse_prompt_config(topic, concept_type, config_path, default_path,
                          config_name):
     with open(default_path) as jf:
-        default_concept_config = json.load(jf)
+        default_prompt_config = json.load(jf)
     with open(config_path) as jf:
-        all_concept_config = json.load(jf)
-    if topic in all_concept_config:
-        topic_config = all_concept_config[topic]
+        all_prompt_config = json.load(jf)
+    if topic in all_prompt_config:
+        topic_config = all_prompt_config[topic]
     else:
         topic_config = {}
     if concept_type in topic_config:
-        concept_config = topic_config[concept_type]
-    elif concept_type in default_concept_config:
+        prompt_config = topic_config[concept_type]
+    elif concept_type in default_prompt_config:
         logging.warning(
             f"No {config_name} provided for {topic} {concept_type}. Using default {config_name} for {concept_type}."
         )
-        concept_config = default_concept_config[concept_type]
+        prompt_config = default_prompt_config[concept_type]
     else:
         logging.warning(
             f"No {config_name} provided for {topic} {concept_type}. Using general default {config_name}."
         )
-        concept_config = default_concept_config["default"]
-    return concept_config
+        prompt_config = default_prompt_config["default"]
+    return prompt_config
 
 
 def count_images(dir_path="images"):

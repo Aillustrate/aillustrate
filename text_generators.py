@@ -6,12 +6,12 @@ import re
 from typing import Any, Dict, List
 
 import torch
-from concept_config import ConceptConfig
+from prompt_config import PromptConfig
 from pydantic.tools import parse_obj_as
 from tqdm.auto import tqdm
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
-from utils import cleanup, parse_concept_config, set_logging
+from utils import cleanup, parse_prompt_config, set_logging
 
 set_logging()
 
@@ -25,8 +25,8 @@ class TextGenerator:
             config_path="",
             **kwargs,
     ):
-        self.CONCEPT_CONFIG_PATH = "prompts/concept_config.json"
-        self.DEFAULT_CONCEPT_CONFIG_PATH = "prompts/default_concept_config.json"
+        self.CONCEPT_CONFIG_PATH = "prompts/prompt_config.json"
+        self.DEFAULT_CONCEPT_CONFIG_PATH = "prompts/default_prompt_config.json"
         self.model = model
         self.tokenizer = tokenizer
         self.batch_size = batch_size
@@ -88,14 +88,14 @@ class TextGenerator:
         )
         self.constraints = constraints or self.config.get("constraints", {})
         self.set_constraints(**constraints)
-        concept_config = parse_concept_config(
+        prompt_config = parse_prompt_config(
             self.topic,
             self.concept_type,
             self.CONCEPT_CONFIG_PATH,
             self.DEFAULT_CONCEPT_CONFIG_PATH,
             "concept config",
         )
-        self.concept_config = parse_obj_as(ConceptConfig, concept_config)
+        self.prompt_config = parse_obj_as(PromptConfig, prompt_config)
 
     def set_constraints(
             self,
@@ -138,31 +138,31 @@ class TextGenerator:
             self.generation_config.update(
                 {"forced_eos_token_id": forced_eos_token_id})
 
-    def set_concept_config(self):
+    def set_prompt_config(self):
         with open(self.DEFAULT_CONCEPT_CONFIG_PATH) as jf:
-            default_concept_config = json.load(jf)
+            default_prompt_config = json.load(jf)
         with open(self.CONCEPT_CONFIG_PATH) as jf:
-            all_concept_config = json.load(jf)
-            if self.topic in all_concept_config:
-                topic_config = all_concept_config[self.topic]
+            all_prompt_config = json.load(jf)
+            if self.topic in all_prompt_config:
+                topic_config = all_prompt_config[self.topic]
             else:
                 logging.warning(
                     f"No concept config provided for {self.topic}. Using default."
                 )
-                topic_config = default_concept_config
+                topic_config = default_prompt_config
             if self.concept_type in topic_config:
-                concept_config = topic_config[self.concept_type]
-            elif self.concept_type in default_concept_config:
+                prompt_config = topic_config[self.concept_type]
+            elif self.concept_type in default_prompt_config:
                 logging.warning(
                     f"No concept config provided for {self.concept_type}. Using default config for {self.concept_type}."
                 )
-                concept_config = topic_config.get("interior")
+                prompt_config = topic_config.get("interior")
             else:
                 logging.warning(
                     f"No concept config provided for {self.topic} {self.concept_type}. Using default config for interior."
                 )
-                concept_config = default_concept_config["interior"]
-            self.concept_config = parse_obj_as(ConceptConfig, concept_config)
+                prompt_config = default_prompt_config["interior"]
+            self.prompt_config = parse_obj_as(PromptConfig, prompt_config)
 
     def make_prompt_to_llm(self, text):
         chat = [
@@ -257,9 +257,9 @@ class ConceptGenerator(TextGenerator):
     def make_prompt_to_llm(self, text):
         self.system_prompt = self.system_prompt.format(
             n=self.batch_size,
-            concept_name=self.concept_config.concept_name,
+            concept_name=self.prompt_config.concept_name,
             topic=self.topic,
-            example=self.concept_config.example,
+            example=self.prompt_config.example,
         )
         return self.template.format(prompt=self.system_prompt)
 
@@ -378,10 +378,10 @@ class PromptGenerator(TextGenerator):
     def make_prompt_to_llm(self, text):
         self.system_prompt = self.system_prompt.format(
             topic=self.topic,
-            concept_name=self.concept_config.concept_name,
-            design=self.concept_config.design,
-            shot_length=self.concept_config.shot_length,
-            extra_aspects=self.concept_config.extra_aspects,
+            concept_name=self.prompt_config.concept_name,
+            design=self.prompt_config.design,
+            shot_length=self.prompt_config.shot_length,
+            extra_aspects=self.prompt_config.extra_aspects,
         )
         return super().make_prompt_to_llm(text)
 
@@ -435,7 +435,7 @@ class PromptGenerator(TextGenerator):
             if show_progress:
                 tq.set_description(concept)
             for i in range(self.batch_size):
-                prompt_prefix = self.concept_config.prompt_prefix.format(
+                prompt_prefix = self.prompt_config.prompt_prefix.format(
                     concept=concept
                 )
                 prompt = self.make_prompt_to_llm(prompt_prefix)
