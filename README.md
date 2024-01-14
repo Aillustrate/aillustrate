@@ -11,7 +11,6 @@ Clone the repository, install requirements and load an image generation model:
 ```bash
 git clone https://github.com/Aillustrate/wonderslide-interior-generation
 pip install -r requirements.txt
-load_model.sh 149716 architectureExterior_v110
   ```
 
 Run via command line:
