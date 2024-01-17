@@ -13,17 +13,17 @@ from diffusers.pipelines.stable_diffusion import StableDiffusionSafetyChecker
 from IPython.display import display
 from tqdm.auto import tqdm
 
-from .utils import cleanup, parse_prompt_config, set_logging
+from .utils import parse_prompt_config, set_logging
 
 
 class ImageGenerator:
     def __init__(
-            self,
-            pipe: DiffusionPipeline,
-            batch_size: int = 1,
-            negative_prompt: str = "",
-            config_path: str = "config/image_generation_config.json",
-            **kwargs,
+        self,
+        pipe: DiffusionPipeline,
+        batch_size: int = 1,
+        negative_prompt: str = "",
+        config_path: str = "config/image_generation_config.json",
+        **kwargs,
     ):
         """
         param pipe: Object of diffusers `DiffusionPipeline` class that will generate the images
@@ -42,17 +42,17 @@ class ImageGenerator:
         self.max_length = self.pipe.tokenizer.model_max_length
 
     def set_config(
-            self,
-            topic: str = "",
-            concept_type: str = "",
-            use_prompt_embeddings: bool = False,
-            num_inference_steps: Union[int, Tuple[int, int]] = (),
-            guidance_scale: Union[int, Tuple[int, int]] = (),
-            width: int = 0,
-            height: int = 0,
-            root_dir: str = "",
-            prompts_dir: str = "generated_prompts",
-            trigger_words: List[str] = [],
+        self,
+        topic: str = "",
+        concept_type: str = "",
+        use_prompt_embeddings: bool = False,
+        num_inference_steps: Union[int, Tuple[int, int]] = (),
+        guidance_scale: Union[int, Tuple[int, int]] = (),
+        width: int = 0,
+        height: int = 0,
+        root_dir: str = "",
+        prompts_dir: str = "generated_prompts",
+        trigger_words: List[str] = [],
     ):
         """
         Set the configuration for the image generator.
@@ -84,8 +84,7 @@ class ImageGenerator:
         root_dir = root_dir or self.config.get("root", root_dir)
         self.root_dir = os.path.join(root_dir, self.topic, self.concept_type)
         os.makedirs(self.root_dir, exist_ok=True)
-        prompts_dir = prompts_dir or self.config.get("prompts_dir",
-                                                     prompts_dir)
+        prompts_dir = prompts_dir or self.config.get("prompts_dir", prompts_dir)
         self.prompts_path = os.path.join(
             prompts_dir, self.topic, f"{self.concept_type} ({self.topic}).json"
         )
@@ -104,8 +103,7 @@ class ImageGenerator:
         )
         self.width = width or self.config.get("width", 864)
         self.height = height or self.config.get("height", 576)
-        self.trigger_words = trigger_words or self.config.get("trigger_words",
-                                                              [])
+        self.trigger_words = trigger_words or self.config.get("trigger_words", [])
 
     def set_negative_prompt(self, negative_prompt):
         if negative_prompt:
@@ -132,16 +130,13 @@ class ImageGenerator:
             f"{param_name} should be either integer or tuple. Got {generation_param}"
         )
 
-    def get_prompt_embeddings(self, prompt, negative_prompt,
-                              split_character=","):
+    def get_prompt_embeddings(self, prompt, negative_prompt, split_character=","):
         count_prompt = len(self.pipe.tokenizer.tokenize(prompt))
-        count_negative_prompt = len(
-            self.pipe.tokenizer.tokenize(negative_prompt))
+        count_negative_prompt = len(self.pipe.tokenizer.tokenize(negative_prompt))
 
         long_kwargs = dict(return_tensors="pt", truncation=False)
         if count_prompt >= count_negative_prompt:
-            input_ids = self.pipe.tokenizer(prompt,
-                                            **long_kwargs).input_ids.to(
+            input_ids = self.pipe.tokenizer(prompt, **long_kwargs).input_ids.to(
                 self.device
             )
             shape_max_length = input_ids.shape[-1]
@@ -165,8 +160,7 @@ class ImageGenerator:
                 padding="max_length",
                 max_length=shape_max_length,
             )
-            input_ids = self.pipe.tokenizer(prompt,
-                                            **short_kwargs).input_ids.to(
+            input_ids = self.pipe.tokenizer(prompt, **short_kwargs).input_ids.to(
                 self.device
             )
 
@@ -174,11 +168,10 @@ class ImageGenerator:
         neg_embeds = []
         for i in range(0, shape_max_length, self.max_length):
             concat_embeds.append(
-                self.pipe.text_encoder(input_ids[:, i:i + self.max_length])[0]
+                self.pipe.text_encoder(input_ids[:, i : i + self.max_length])[0]
             )
             neg_embeds.append(
-                self.pipe.text_encoder(negative_ids[:, i:i + self.max_length])[
-                    0]
+                self.pipe.text_encoder(negative_ids[:, i : i + self.max_length])[0]
             )
 
         return torch.cat(concat_embeds, dim=1), torch.cat(neg_embeds, dim=1)
@@ -194,18 +187,18 @@ class ImageGenerator:
         image.save(path)
 
     def generate_by_prompt(
-            self,
-            prompt: str = None,
-            start_idx: int = -1,
-            display_images: bool = True,
-            save: bool = False,
-            series_name: str = "",
-            add_trigger_words: bool = True,
-            **kwargs,
+        self,
+        prompt: str = None,
+        start_idx: int = -1,
+        display_images: bool = True,
+        save: bool = False,
+        series_name: str = "",
+        add_trigger_words: bool = True,
+        **kwargs,
     ):
         """
         Generates one or multiple images for one prompt.
-        
+
         param prompt: A prompt to generate an image for
         start_idx: Random seed to start iteration from.
         If `batch_size` > 1 and it will increase by 1 for every new generation.
@@ -222,11 +215,9 @@ class ImageGenerator:
         if add_trigger_words:
             prompt = f'{prompt} {",".join(self.trigger_words)}'
         if start_idx == -1:
-            seeds = [random.randint(1, int(1e6)) for _ in
-                     range(self.batch_size)]
+            seeds = [random.randint(1, int(1e6)) for _ in range(self.batch_size)]
         else:
-            seeds = [i for i in
-                     range(start_idx, start_idx + self.batch_size, 1)]
+            seeds = [i for i in range(start_idx, start_idx + self.batch_size, 1)]
         for count, seed in enumerate(seeds):
             guidance_scale = random.choice(self.guidance_scale_range)
             num_inference_steps = random.choice(self.num_inference_steps_range)
@@ -279,7 +270,7 @@ class ImageGenerator:
     def generate(self, prompt: str = None, save: bool = True, **kwargs):
         """
         Main generation method. Generates image(s) for prompt(s)
-        
+
         param prompt: A prompt to generate an image for.
         If not provided prompts are loaded from a file.
         Recommended to pass this argument for single experiments.
@@ -321,20 +312,19 @@ class ImageGenerator:
             tq.set_description(concept)
             for prompt in prompts_for_concept:
                 images = self.generate(
-                    prompt, display_images=False, series_name=concept,
-                    save=save
+                    prompt, display_images=False, series_name=concept, save=save
                 )
         return images
 
 
 def get_pipe(
-        model_name: str = "",
-        clip_skip: int = 0,
-        text_encoder_name: str = "",
-        device=None,
-        torch_dtype=torch.float16,
-        lora_paths: List[str] = [],
-        config_path: str = "config/image_generation_config.json",
+    model_name: str = "",
+    clip_skip: int = 0,
+    text_encoder_name: str = "",
+    device=None,
+    torch_dtype=torch.float16,
+    lora_paths: List[str] = [],
+    config_path: str = "config/image_generation_config.json",
 ) -> DiffusionPipeline:
     """
     Get the image generation pipeline
@@ -357,8 +347,9 @@ def get_pipe(
             config = json.load(jf)
     else:
         config = {}
-    model_name = model_name or config.get("model_name",
-                                          "runwayml/stable-diffusion-v1-5")
+    model_name = model_name or config.get(
+        "model_name", "runwayml/stable-diffusion-v1-5"
+    )
     clip_skip = clip_skip or config.get("clip_skip", 1)
     text_encoder_name = text_encoder_name or config.get(
         "encoder", "runwayml/stable-diffusion-v1-5"

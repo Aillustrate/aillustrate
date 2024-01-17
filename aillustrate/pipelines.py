@@ -2,8 +2,8 @@ import argparse
 import logging
 
 from diffusers import DiffusionPipeline
-from transformers import AutoModelForCausalLM, AutoTokenizer
 from tqdm.auto import tqdm
+from transformers import AutoModelForCausalLM, AutoTokenizer
 
 from .image_generator import ImageGenerator, get_pipe
 from .post_processor import PromptProcessor
@@ -15,19 +15,19 @@ set_logging()
 
 class BasePipeline:
     def __init__(
-            self,
-            topic,
-            concept_type,
-            model: AutoModelForCausalLM = None,
-            tokenizer: AutoTokenizer = None,
-            img_pipe: DiffusionPipeline = None,
-            generation_config_concepts_path: str = "config/generation_config_concepts.json",
-            generation_config_path: str = "config/generation_config.json",
-            image_generation_config_path: str = "config/image_generation_config.json",
+        self,
+        topic,
+        concept_type,
+        model: AutoModelForCausalLM = None,
+        tokenizer: AutoTokenizer = None,
+        img_pipe: DiffusionPipeline = None,
+        generation_config_concepts_path: str = "config/generation_config_concepts.json",
+        generation_config_path: str = "config/generation_config.json",
+        image_generation_config_path: str = "config/image_generation_config.json",
     ):
         """
         Pipeline for concept, prompt and image generation
-                
+
         param topic: The topic of the images (e.g. 'Innovation and technologies')
         param concept_type: The concept type of the images e.g. 'interior')
         param model: The decode model to generate the concepts and prompts
@@ -58,20 +58,19 @@ class BasePipeline:
             self.img_pipe = get_pipe()
 
     def release_cuda(self):
-        self.model.to('cpu')
-        #self.img_pipe.to('cpu')
+        self.model.to("cpu")
+        # self.img_pipe.to('cpu')
         del self.model
         del self.img_pipe
         cleanup()
 
     def run(
-            self,
-            min_concepts=150,
-            prompt_batch_size=1,
-            img_batch_size=1,
+        self,
+        min_concepts=150,
+        prompt_batch_size=1,
+        img_batch_size=1,
     ):
         return None
-
 
 
 class SequentialPipeline(BasePipeline):
@@ -80,10 +79,10 @@ class SequentialPipeline(BasePipeline):
         super().__init__(topic, concept_type, **kwargs)
 
     def run(
-            self,
-            min_concepts=150,
-            prompt_batch_size=1,
-            img_batch_size=1,
+        self,
+        min_concepts=150,
+        prompt_batch_size=1,
+        img_batch_size=1,
     ):
         """
         Generate a set of images by topic and concept type. Prompts and images are generated sequentially
@@ -121,16 +120,17 @@ class SequentialPipeline(BasePipeline):
         image_generator.generate(save=True)
         self.release_cuda()
 
+
 class ParallelPipeline(BasePipeline):
     def __init__(self, topic, concept_type, **kwargs):
         """Pipeline for concept, prompt and image generation. Prompts and images are generated in parallel (promt + image for each concept)"""
         super().__init__(topic, concept_type, **kwargs)
-        
+
     def run(
-            self,
-            min_concepts=150,
-            prompt_batch_size=1,
-            img_batch_size=1,
+        self,
+        min_concepts=150,
+        prompt_batch_size=1,
+        img_batch_size=1,
     ):
         """
         Generate a set of images by topic and concept type. Prompts and images are generated in parallel
@@ -165,28 +165,34 @@ class ParallelPipeline(BasePipeline):
         tq = tqdm(concepts)
         for concept in tq:
             tq.set_description(concept)
-            prompts = prompt_generator.generate(concepts = [concept], save=True, rewrite=True, show_progress=False)
-            prompt_processor = PromptProcessor(prompts=prompts, prompt_generator=prompt_generator)
-            _, processed_prompts = prompt_processor.process(save=True, auto_regenerate=True)
+            prompts = prompt_generator.generate(
+                concepts=[concept], save=True, rewrite=True, show_progress=False
+            )
+            prompt_processor = PromptProcessor(
+                prompts=prompts, prompt_generator=prompt_generator
+            )
+            _, processed_prompts = prompt_processor.process(
+                save=True, auto_regenerate=True
+            )
             generated_prompts.update(processed_prompts)
             prompt_generator.save(generated_prompts)
             for prompt in processed_prompts.values():
-                image_generator.generate_by_prompt(prompt = prompt, series_name = concept, save=True, display_images=False)
+                image_generator.generate_by_prompt(
+                    prompt=prompt, series_name=concept, save=True, display_images=False
+                )
         self.release_cuda()
-                
 
-if __name__ == '__main__':
-    #python main.py --topic='Innovations and technologies' --concept_type='interior' --mode='parallel'
+
+if __name__ == "__main__":
+    # python main.py --topic='Innovations and technologies' --concept_type='interior' --mode='parallel'
     parser = argparse.ArgumentParser()
     parser.add_argument("--topic", type=str, required=True)
     parser.add_argument("--concept_type", type=str, required=True)
-    parser.add_argument("--mode", type=str, required=False, default='parallel')
+    parser.add_argument("--mode", type=str, required=False, default="parallel")
     args = parser.parse_args()
     topic, concept_type, mode = args.topic, args.concept_type, args.mode
-    if mode == 'sequential':
+    if mode == "sequential":
         full_pipeline = SequentialPipeline(topic, concept_type)
     else:
         full_pipeline = ParallelPipeline(topic, concept_type)
     full_pipeline.run()
-
-

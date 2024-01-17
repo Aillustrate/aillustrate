@@ -53,8 +53,7 @@ def archive(path, result_path="result"):
     os.makedirs(folder_to_archive_path)
     for fname in tqdm(image_names):
         shutil.move(
-            os.path.join(path, fname),
-            os.path.join(folder_to_archive_path, fname)
+            os.path.join(path, fname), os.path.join(folder_to_archive_path, fname)
         )
     archive_path = os.path.join(result_path, archive_name)
     shutil.make_archive(archive_path, "zip", folder_to_archive_path)
@@ -82,12 +81,12 @@ def set_topic(topic, config_dir="config"):
 
 
 def update_config(
-        topic,
-        concept_type,
-        lora_config="config/loras.json",
-        generation_config_concepts_path="config/generation_config_concepts.json",
-        generation_config_path="config/generation_config.json",
-        image_generation_config_path="config/image_generation_config.json",
+    topic,
+    concept_type,
+    lora_config="config/loras.json",
+    generation_config_concepts_path="config/generation_config_concepts.json",
+    generation_config_path="config/generation_config.json",
+    image_generation_config_path="config/image_generation_config.json",
 ):
     with open(lora_config) as jf:
         lora_config = json.load(jf).get(topic, {}).get(concept_type, {})
@@ -109,8 +108,7 @@ def update_config(
             json.dump(config, jf)
 
 
-def parse_prompt_config(topic, concept_type, config_path, default_path,
-                         config_name):
+def parse_prompt_config(topic, concept_type, config_path, default_path, config_name):
     with open(default_path) as jf:
         default_prompt_config = json.load(jf)
     with open(config_path) as jf:
@@ -142,8 +140,7 @@ def count_images(dir_path="images"):
             if not subfolder.startswith("."):
                 path = os.path.join(topic_dir, subfolder)
                 num_images = len(select_images(path))
-                counts.append(
-                    {"topic": topic, "sub": subfolder, "images": num_images})
+                counts.append({"topic": topic, "sub": subfolder, "images": num_images})
     return pd.DataFrame(counts)
 
 
