@@ -16,7 +16,7 @@ setup(
     version="0.0.1",
     description="automatic image generation pipeline",
     url="https://github.com/Aillustrate/wonderslide-interior-generation/",
-    long_description=read("README.md"),
+    long_description=pen('README.md').read(),
     long_description_content_type="text/markdown",
     author="Aillustrate team",
     packages=find_packages(exclude=["tests", ".github"]),
