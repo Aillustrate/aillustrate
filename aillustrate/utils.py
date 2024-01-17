@@ -33,7 +33,7 @@ def cleanup(model=None):
 
 
 def reload(module_path):
-    module = importlib.import_module(module_path)
+    module = importlib.import_module(f'aillustrate.{module_path}')
     importlib.reload(module)
     logging.info(f"{module} reloaded successfully")
 
