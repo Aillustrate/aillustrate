@@ -25,7 +25,7 @@ topic = [your topic] #e.g. Innovations and technologies
 concept_type = [concept_type] #e.g. interior
 
 # initialize the pipeline
-from main import ParllelPipeline
+from aillustrate.pipelines import ParllelPipeline
 pipeline = ParllelPipeline(topic, concept_type)
 
 # start the generation process
