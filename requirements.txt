@@ -1,0 +1,8 @@
+accelerate==0.21.0
+diffusers==0.20.0
+img2vec_pytorch
+huggingface_hub==0.16.4
+omegaconf==2.3.0
+pyyaml
+torch==1.13.1+cu117
+transformers>=4.34.0
