@@ -291,7 +291,7 @@ class ConceptGenerator(TextGenerator):
             with open(self.path) as jf:
                 concept_list = json.load(jf)
         for i in range(len(concept_list)):
-            concept_list[i] = concept_list[i].lower().strip()
+            concept_list[i] = str(concept_list[i]).lower().strip()
         concept_list = sorted(list(set(concept_list)))
         if save:
             with open(self.path, "w") as jf:
