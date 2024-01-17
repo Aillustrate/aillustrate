@@ -1,5 +1,6 @@
 import io
 import os
+
 from setuptools import find_packages, setup
 
 
@@ -21,7 +22,5 @@ setup(
     author="Aillustrate team",
     packages=find_packages(exclude=["tests", ".github"]),
     install_requires=read_requirements("requirements.txt"),
-    entry_points={
-        "console_scripts": ["aillustrate = aillustrate.__main__:main"]
-    }
+    entry_points={"console_scripts": ["aillustrate = aillustrate.__main__:main"]},
 )

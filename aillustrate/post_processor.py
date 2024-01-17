@@ -3,23 +3,23 @@ import logging
 import re
 from typing import Dict, List
 
-from .utils import set_logging
 from .text_generators import PromptGenerator
+from .utils import set_logging
 
 set_logging()
 
 
 class PromptProcessor:
     def __init__(
-            self,
-            topic="",
-            concept_type="",
-            prompts_path: str = None,
-            prompts: Dict[str, List[str]] = None,
-            prompt_generator: PromptGenerator = None,
-            min_words=0,
-            intro_words=[],
-            config_path="config/generation_config.json",
+        self,
+        topic="",
+        concept_type="",
+        prompts_path: str = None,
+        prompts: Dict[str, List[str]] = None,
+        prompt_generator: PromptGenerator = None,
+        min_words=0,
+        intro_words=[],
+        config_path="config/generation_config.json",
     ):
         """
         param topic: The topic of the images (e.g. 'Innovation and technologies')
@@ -36,13 +36,11 @@ class PromptProcessor:
         self.set_config(
             topic, concept_type, prompts, prompts_path, min_words, intro_words
         )
-        self.special_tokens = [re.compile("<*/?SYS>*"),
-                               re.compile("\[/?INST\]")]
+        self.special_tokens = [re.compile("<*/?SYS>*"), re.compile("\[/?INST\]")]
         self.to_regenerate = {"too short": [], "has intro": []}
 
     def set_config(
-            self, topic, concept_type, prompts, prompts_path, min_words,
-            intro_words
+        self, topic, concept_type, prompts, prompts_path, min_words, intro_words
     ):
         if self.config_path:
             with open(self.config_path) as jf:
@@ -54,8 +52,8 @@ class PromptProcessor:
         self.min_words = min_words or config.get("min_words", 0)
         self.intro_words = intro_words or config.get("banned_intro_words", [])
         self.prompts_path = (
-                prompts_path
-                or f"generated_prompts/{self.topic}/{self.concept_type} ({self.topic}).json"
+            prompts_path
+            or f"generated_prompts/{self.topic}/{self.concept_type} ({self.topic}).json"
         )
         self.prompts = self.load_prompts(prompts)
 
@@ -142,8 +140,7 @@ class PromptProcessor:
         for concept, promptlist in self.prompts.items():
             processed_prompts[concept] = []
             for prompt in promptlist:
-                processed_prompts[concept].append(
-                    self.process_prompt(prompt, concept))
+                processed_prompts[concept].append(self.process_prompt(prompt, concept))
         self.prompts = processed_prompts
         if auto_regenerate:
             while any(list(self.to_regenerate.values())):

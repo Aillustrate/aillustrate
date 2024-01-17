@@ -97,7 +97,7 @@ def main():
     pool.terminate()
     flat_list = [item for sublist in results if sublist for item in sublist]
     print(
-        f"Всего найдено {len(flat_list)/2} дубликатов ({round(len(flat_list)/len(image_files), 2)*100/2}%)"
+        f"Всего найдено {len(flat_list) / 2} дубликатов ({round(len(flat_list) / len(image_files), 2) * 100 / 2}%)"
     )
     for file in range(0, len(flat_list), 2):
         print(

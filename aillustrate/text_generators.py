@@ -18,12 +18,12 @@ set_logging()
 
 class TextGenerator:
     def __init__(
-            self,
-            model: AutoModelForCausalLM,
-            tokenizer: AutoTokenizer,
-            batch_size=1,
-            config_path="",
-            **kwargs,
+        self,
+        model: AutoModelForCausalLM,
+        tokenizer: AutoTokenizer,
+        batch_size=1,
+        config_path="",
+        **kwargs,
     ):
         self.CONCEPT_CONFIG_PATH = "prompts/prompt_config.json"
         self.DEFAULT_CONCEPT_CONFIG_PATH = "prompts/default_prompt_config.json"
@@ -32,19 +32,18 @@ class TextGenerator:
         self.batch_size = batch_size
         self.config_path = config_path
         self.set_config(**kwargs)
-        self.path = os.path.join(self.root,
-                                 f"{self.concept_type} ({self.topic}).json")
+        self.path = os.path.join(self.root, f"{self.concept_type} ({self.topic}).json")
 
     def set_config(
-            self,
-            topic: str = "",
-            concept_type: str = "",
-            root: str = "",
-            device: str = "",
-            system_prompt: str = "",
-            template: str = "",
-            generation_config: Dict[str, Any] = {},
-            constraints: Dict[str, Any] = {},
+        self,
+        topic: str = "",
+        concept_type: str = "",
+        root: str = "",
+        device: str = "",
+        system_prompt: str = "",
+        template: str = "",
+        generation_config: Dict[str, Any] = {},
+        constraints: Dict[str, Any] = {},
     ):
         """
         Set the configuration for the text generator.
@@ -98,12 +97,12 @@ class TextGenerator:
         self.prompt_config = parse_obj_as(PromptConfig, prompt_config)
 
     def set_constraints(
-            self,
-            suppress_words: List[str] = None,
-            begin_suppress_words: List[str] = None,
-            sequence_bias: Dict[str, float] = None,
-            forced_eos: str = None,
-            bad_words: List[str] = None,
+        self,
+        suppress_words: List[str] = None,
+        begin_suppress_words: List[str] = None,
+        sequence_bias: Dict[str, float] = None,
+        forced_eos: str = None,
+        bad_words: List[str] = None,
     ):
         """
         Set text generation constraints.
@@ -124,8 +123,7 @@ class TextGenerator:
                 {"begin_suppress_tokens": begin_suppress_tokens}
             )
         if bad_words:
-            bad_words_ids = [self.get_token_ids(word) for word in
-                             bad_words.split(" ")]
+            bad_words_ids = [self.get_token_ids(word) for word in bad_words.split(" ")]
             self.generation_config.update({"bad_words_ids": bad_words_ids})
         if sequence_bias:
             sequence_bias = {
@@ -135,8 +133,7 @@ class TextGenerator:
             self.generation_config.update({"sequence_bias": sequence_bias})
         if forced_eos:
             forced_eos_token_id = self.get_token_ids(forced_eos)
-            self.generation_config.update(
-                {"forced_eos_token_id": forced_eos_token_id})
+            self.generation_config.update({"forced_eos_token_id": forced_eos_token_id})
 
     def set_prompt_config(self):
         with open(self.DEFAULT_CONCEPT_CONFIG_PATH) as jf:
@@ -177,8 +174,7 @@ class TextGenerator:
             )
 
     def generate_text(self, text):
-        input_ids = self.tokenizer(text, return_tensors="pt").input_ids.to(
-            self.device)
+        input_ids = self.tokenizer(text, return_tensors="pt").input_ids.to(self.device)
         output = self.tokenizer.decode(
             self.model.generate(
                 input_ids,
@@ -204,8 +200,7 @@ class TextGenerator:
 
     def get_collection(self, rewrite, default=[]):
         collection = default
-        if not rewrite and os.path.exists(self.path) and os.path.getsize(
-                self.path) > 0:
+        if not rewrite and os.path.exists(self.path) and os.path.getsize(self.path) > 0:
             with open(self.path) as jf:
                 collection = json.load(jf)
         return collection
@@ -219,14 +214,14 @@ class TextGenerator:
 
 class ConceptGenerator(TextGenerator):
     def __init__(
-            self,
-            model: AutoModelForCausalLM,
-            tokenizer: AutoTokenizer,
-            batch_size=20,
-            root="concepts",
-            min_list_size=0,
-            config_path="config/generation_config_concepts.json",
-            **kwargs,
+        self,
+        model: AutoModelForCausalLM,
+        tokenizer: AutoTokenizer,
+        batch_size=20,
+        root="concepts",
+        min_list_size=0,
+        config_path="config/generation_config_concepts.json",
+        **kwargs,
     ):
         """
         param model: The decoder model to generate the concepts
@@ -249,8 +244,7 @@ class ConceptGenerator(TextGenerator):
         self.LLM_PROMPT_START = "[INST]"
         self.LLM_PROMPT_END = "[/INST]"
         self.SAVE_MESSAGE = f'Concepts saved to "{self.path}"'
-        self.min_list_size = min_list_size or self.config.get("min_list_size",
-                                                              150)
+        self.min_list_size = min_list_size or self.config.get("min_list_size", 150)
         if self.min_list_size < self.batch_size:
             self.batch_size = self.min_list_size
 
@@ -323,8 +317,7 @@ class ConceptGenerator(TextGenerator):
         with tqdm(initial=prev_len, total=self.min_list_size) as pbar:
             while len(concept_list) < self.min_list_size:
                 try:
-                    new_concepts = self.generate_batch(save=False,
-                                                       rewrite=True)
+                    new_concepts = self.generate_batch(save=False, rewrite=True)
                     concept_list.extend(new_concepts)
                     concept_list = self.normalize_list(
                         concept_list=concept_list, save=False
@@ -340,14 +333,14 @@ class ConceptGenerator(TextGenerator):
 
 class PromptGenerator(TextGenerator):
     def __init__(
-            self,
-            model: AutoModelForCausalLM,
-            tokenizer: AutoTokenizer,
-            batch_size=1,
-            root="generated_prompts",
-            concepts_root="concepts",
-            config_path="config/generation_config.json",
-            **kwargs,
+        self,
+        model: AutoModelForCausalLM,
+        tokenizer: AutoTokenizer,
+        batch_size=1,
+        root="generated_prompts",
+        concepts_root="concepts",
+        config_path="config/generation_config.json",
+        **kwargs,
     ):
         """
         param model: The decode model to generate the prompts
@@ -370,8 +363,7 @@ class PromptGenerator(TextGenerator):
         self.RESPONSE_REGEXP = re.compile(r"(?<=\[/INST]).*")
         self.SAVE_MESSAGE = f'Generated prompts saved to "{self.path}"'
         self.concepts_path = os.path.join(
-            concepts_root, self.topic,
-            f"{self.concept_type} ({self.topic}).json"
+            concepts_root, self.topic, f"{self.concept_type} ({self.topic}).json"
         )
         # self.path = os.path.join(self.root, f'{self.concept_type} ({self.topic}).json')
 
@@ -399,14 +391,14 @@ class PromptGenerator(TextGenerator):
         return ""
 
     def generate(
-            self,
-            save=False,
-            rewrite=False,
-            display=False,
-            sort=True,
-            concepts=[],
-            rewrite_concept=False,
-            show_progress=True
+        self,
+        save=False,
+        rewrite=False,
+        display=False,
+        sort=True,
+        concepts=[],
+        rewrite_concept=False,
+        show_progress=True,
     ) -> Dict[str, str]:
         """
         Generates prompts for images.
@@ -435,9 +427,7 @@ class PromptGenerator(TextGenerator):
             if show_progress:
                 tq.set_description(concept)
             for i in range(self.batch_size):
-                prompt_prefix = self.prompt_config.prompt_prefix.format(
-                    concept=concept
-                )
+                prompt_prefix = self.prompt_config.prompt_prefix.format(concept=concept)
                 prompt = self.make_prompt_to_llm(prompt_prefix)
                 llm_output = self.generate_text(prompt)
                 generated_prompt = f"{prompt_prefix}: {self.extract(llm_output)}"
@@ -461,9 +451,9 @@ class PromptGenerator(TextGenerator):
 
 
 def get_llm(
-        model_name: str = "",
-        device:str = "",
-        config_path: str = "config/generation_config.json"
+    model_name: str = "",
+    device: str = "",
+    config_path: str = "config/generation_config.json",
 ) -> [AutoModelForCausalLM, AutoTokenizer]:
     """
     Get model and tokenizer by name.
