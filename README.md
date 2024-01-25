@@ -32,4 +32,4 @@ pipeline = ParllelPipeline(topic, concept_type)
 pipeline.run()
 ```
 
-Aso see the [notebook](https://github.com/Aillustrate/wonderslide-interior-generation/blob/main/notebooks/example.ipynb) with examples.
+Aso see the [notebook](https://github.com/Aillustrate/aillustrate/blob/main/notebooks/example.ipynb) with examples.
