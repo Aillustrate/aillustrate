@@ -9,7 +9,7 @@ By **concept** we mean what the images depict. We considered 3 types of concepts
 
 Clone the repository, install requirements and load an image generation model:
 ```bash
-git clone https://github.com/Aillustrate/wonderslide-interior-generation
+git clone https://github.com/Aillustrate/aillustrate
 pip install -r requirements.txt
   ```
 
