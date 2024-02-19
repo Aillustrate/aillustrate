@@ -3,6 +3,8 @@ This tool allows to generate images for various topics and concepts. See our [de
 By **topic** we mean the general domain to which images are related *(e.g. Innovations and technologies, Home Interior and Lifestyle, Nature and ecology)*    
 By **concept** we mean what the images depict. We considered 3 types of concepts: *interiors, exteriors and items*, but this list can be broadened.
 
+See our [wiki](https://github.com/Aillustrate/aillustrate/wiki) for more details.
+
 ![Image Generation Pipeline](image_generation_pipeline.png)
 
 ## How to use
