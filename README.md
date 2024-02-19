@@ -1,9 +1,14 @@
 # Automatic image generation pipeline
-This tool allows to generate images for various topics and concepts. See our [design doc](ml_system_design_doc/ML_System_Design_Doc_Image_Generation.md) (RU) for more details.  
-By **topic** we mean the general domain to which images are related *(e.g. Innovations and technologies, Home Interior and Lifestyle, Nature and ecology)*    
-By **concept** we mean what the images depict. We considered 3 types of concepts: *interiors, exteriors and items*, but this list can be broadened.
-
-See our [wiki](https://github.com/Aillustrate/aillustrate/wiki) for more details.
+<table>
+   <tr>
+<td> <img src='https://github.com/Aillustrate/aillustrate/assets/78635473/9303be7e-a2d1-4d6a-a9d2-ca46a26364ab' width='1000px'> </td>
+<td> This tool allows to generate images for various topics and concepts.<br>
+By <b>topic</b> we mean the general domain to which images are related <i>(e.g. Innovations and technologies, Home Interior and Lifestyle, Nature and ecology)</i> <br>
+By <b>concept</b> we mean what the images depict. We considered 3 types of concepts: <i>interiors, exteriors and items</i>, but this list can be broadened. <br>
+See our <a href='ml_system_design_doc/ML_System_Design_Doc_Image_Generation.md'>design doc</a> (RU)  and <a href='https://github.com/Aillustrate/aillustrate/wiki'>wiki</a> (EN) for more details.
+</td>
+</tr>
+</table>
 
 ![Image Generation Pipeline](image_generation_pipeline.png)
 
